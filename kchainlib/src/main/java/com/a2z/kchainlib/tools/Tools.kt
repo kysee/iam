@@ -1,4 +1,4 @@
-package com.example.libkchain.tools
+package com.a2z.kchainlib.tools
 
 import java.security.SecureRandom
 
@@ -28,10 +28,9 @@ fun fromHex(hex: String): ByteArray {
     return result
 }
 
-fun RandBytes(n: Int): ByteArray {
+fun randBytes(n: Int): ByteArray {
     val random = SecureRandom()
     val bytes = ByteArray(20)
     random.nextBytes(bytes)
     return bytes
 }
-
