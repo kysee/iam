@@ -1,24 +1,18 @@
-@file:UseSerializers(PubKeyPemSerializer::class)
-
 package com.a2z.kdid
 
-import com.a2z.kchainlib.BigIntegerSerializer
-import com.a2z.kchainlib.tools.toHex
+import com.google.crypto.tink.subtle.Hex
 import kotlinx.serialization.*
-import kotlinx.serialization.builtins.ByteArraySerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import kotlinx.serialization.modules.EmptyModule
 import kotlinx.serialization.modules.SerialModule
-import kotlinx.serialization.modules.SerializersModule
-import kotlinx.serialization.protobuf.ProtoBuf
-import java.math.BigInteger
-import java.security.MessageDigest
 
 open class KDIDObject<T> {
     @ImplicitReflectionSerializer
     inline fun <reified T> encode(context: SerialModule = EmptyModule): String {
-        return Json(JsonConfiguration.Stable, context).stringify(serializer(), this as T)
+        var conf: JsonConfiguration = JsonConfiguration.Stable
+
+        return Json(conf, context).stringify(serializer(), this as T)
     }
 
     companion object {
@@ -35,8 +29,21 @@ data class KDID (
     val method: String,
     val idstring: String
 ) : KDIDObject<KDID>() {
-    fun did(): String {
+    public fun did(): String {
         return "did:$method:$idstring"
+    }
+
+    @Serializer(forClass = KDID::class)
+    companion object : KSerializer<KDID> {
+        override fun serialize(encoder: Encoder, obj: KDID) {
+            encoder.encodeString(obj.did())
+        }
+
+        override fun deserialize(decoder: Decoder): KDID {
+            val str = decoder.decodeString()
+            val arr = str.split(":")
+            return KDID(arr[1], arr[2])
+        }
     }
 }
 
@@ -62,15 +69,17 @@ data class KDIDPubKey (
     val id: KDID,
     val type: String,
     val controller: KDID,
+    @SerialName("PubKeyPem")
     val publicKeyX: PubKeyMaterial
 ) : KDIDObject<KDIDPubKey>()
+
 
 interface PubKeyMaterial {
     val material: ByteArray
     fun toFormatted(): ByteArray
 }
 
-@Serializable(with = PubKeyPemSerializer::class)
+
 data class PubKeyPem(
     override val material: ByteArray
 ) : PubKeyMaterial, KDIDObject<PubKeyPem>() {
@@ -96,22 +105,22 @@ data class PubKeyPem(
 }
 
 @Serializer(forClass = PubKeyPem::class)
-object PubKeyPemSerializer: KSerializer<PubKeyPem> {
+object PubKeyPemSerializer : KSerializer<PubKeyPem> {
 
-    override val descriptor: SerialDescriptor =
-        PrimitiveDescriptor("publicKeyPem", PrimitiveKind.STRING)
+//    override val descriptor: SerialDescriptor =
+//        PrimitiveDescriptor("PubKeyPem", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, obj: PubKeyPem) {
-        encoder.encodeSerializableValue(ByteArraySerializer(), obj.material)
+        encoder.encodeString(Hex.encode(obj.material))
     }
 
     override fun deserialize(decoder: Decoder): PubKeyPem {
-        val bz = decoder.decodeSerializableValue(ByteArraySerializer())
-        return PubKeyPem(bz)
+        val hex = decoder.decodeString()
+        return PubKeyPem(Hex.decode(hex))
     }
 }
 
-@Serializable
+
 data class PubKeyJwk(
     val crv: String,
     @SerialName("x") override val material: ByteArray,

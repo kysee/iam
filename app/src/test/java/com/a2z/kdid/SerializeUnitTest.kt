@@ -16,6 +16,7 @@ import org.junit.Assert.*
  * See [testing documentation](http://d.android.com/tools/testing).
  */
 class SerializeUnitTest {
+
     @Test
     fun addition_isCorrect() {
         assertEquals(4, 2 + 2)
@@ -35,12 +36,34 @@ class SerializeUnitTest {
 
 
 
-        val pubKeyMaterialModule = SerializersModule { // 1
-            polymorphic(PubKeyMaterial::class) { // 2
-                PubKeyJwk::class with PubKeyJwk.serializer() // 3
-                PubKeyPem::class with PubKeyPem.serializer() // 4
+        val pubKeyMaterialModule = SerializersModule {
+            polymorphic(PubKeyMaterial::class) {
+                PubKeyPem::class with PubKeyPemSerializer
             }
         }
         println(pubKey.encode<KDIDPubKey>(pubKeyMaterialModule))
+
+//        Json(context = pubKeyMaterialModule, configuration = JsonConfiguration.Stable).stringify(KDIDPubKey.serializer(), pubKey).also {
+//            println(it)
+//        }
+
+//        println(pubKey.encode<KDIDPubKey>())
+    }
+
+    @Test
+    fun testJson() {
+
+        val runnableModule = SerializersModule {
+            polymorphic(IRunnable::class) {
+                Horse::class with HorseSerializer
+                Dog::class with DogSerializer
+            }
+        }
+
+        val zoo = Zoo(Dog())
+
+        Json(context = runnableModule).stringify(Zoo.serializer() , zoo).also {
+            println(it)
+        }
     }
 }
