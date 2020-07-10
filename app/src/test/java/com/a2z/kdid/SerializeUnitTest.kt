@@ -25,45 +25,35 @@ class SerializeUnitTest {
     @ImplicitReflectionSerializer
     @Test
     fun json_serializer() {
-        val subjectId = KDID("kchain", toHex(randBytes(32)))
-        val controllerId = KDID("kchain", toHex(randBytes(32)))
-        val pubKey = KDIDPubKey(
-            subjectId,
-            "pubkeytype",
-            controllerId,
-            PubKeyPem(randBytes(32))
+        val subjectId = KDID("kchain", toHex(randBytes(20)))
+        val subject = KDIDSubject(
+            "Yongseok Kwon",
+            "M",
+            "19741205",
+            "01033334444",
+            "7412050000000"
         )
 
+        val pubKeyId = KDID("kchain", toHex(randBytes(20)))
+        val controllerId = KDID("kchain", toHex(randBytes(20)))
+        val pubKey = KDIDPubKey(
+            id = pubKeyId,
+            controller = controllerId,
+            //PubKeyPem(randBytes(32))
+            publicKeyJwk = PubKeyJwk("ed25519", randBytes(32), "kty", pubKeyId.did())
+        )
 
+        val kdiddoc = KDIDDoc(
+            subjectId,
+            pubKey,
+            subject
+        )
 
-        val pubKeyMaterialModule = SerializersModule {
-            polymorphic(PubKeyMaterial::class) {
-                PubKeyPem::class with PubKeyPemSerializer
-            }
-        }
-        println(pubKey.encode<KDIDPubKey>(pubKeyMaterialModule))
+        val json = kdiddoc.encode<KDIDDoc>()
+        println(json)
 
-//        Json(context = pubKeyMaterialModule, configuration = JsonConfiguration.Stable).stringify(KDIDPubKey.serializer(), pubKey).also {
-//            println(it)
-//        }
-
-//        println(pubKey.encode<KDIDPubKey>())
-    }
-
-    @Test
-    fun testJson() {
-
-        val runnableModule = SerializersModule {
-            polymorphic(IRunnable::class) {
-                Horse::class with HorseSerializer
-                Dog::class with DogSerializer
-            }
-        }
-
-        val zoo = Zoo(Dog())
-
-        Json(context = runnableModule).stringify(Zoo.serializer() , zoo).also {
-            println(it)
-        }
+        val kdiddoc2 = KDIDObject.decode<KDIDDoc>(json)
+        println(kdiddoc2)
+        assertEquals(kdiddoc, kdiddoc2)
     }
 }

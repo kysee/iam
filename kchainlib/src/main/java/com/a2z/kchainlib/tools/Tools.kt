@@ -30,7 +30,7 @@ fun fromHex(hex: String): ByteArray {
 
 fun randBytes(n: Int): ByteArray {
     val random = SecureRandom()
-    val bytes = ByteArray(20)
+    val bytes = ByteArray(n)
     random.nextBytes(bytes)
     return bytes
 }

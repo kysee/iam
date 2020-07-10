@@ -2,10 +2,10 @@ package com.a2z.kchainlib
 
 import com.a2z.kchainlib.tools.fromHex
 import com.a2z.kchainlib.tools.randBytes
-import com.a2z.kchainlib.tools.toHex
+import com.a2z.kchainlib.trx.TrxDataCreate
+import com.a2z.kchainlib.trx.TrxPayload
+import com.a2z.kchainlib.trx.TrxTransfer
 import kotlinx.serialization.ImplicitReflectionSerializer
-import kotlinx.serialization.protobuf.ProtoBuf
-import kotlinx.serialization.protobuf.ProtoId
 import org.junit.Test
 import org.junit.Assert.*
 import java.math.BigInteger
@@ -24,7 +24,10 @@ class ProtoBufUnitTest {
     @ImplicitReflectionSerializer
     @Test
     fun testTrxTransferProtobuf() {
-        val tx = TrxTransfer(BigInteger("10000000000000000"), "Hello".toByteArray())
+        val tx = TrxTransfer(
+            BigInteger("10000000000000000"),
+            "Hello".toByteArray()
+        )
         val bz = tx.encode<TrxTransfer>()
         assertArrayEquals(fromHex("0A072386F26FC10000120548656C6C6F"), bz)
         val tx2 = TrxPayload.decode<TrxTransfer>(bz)
@@ -35,7 +38,8 @@ class ProtoBufUnitTest {
     @Test
     fun testTrxDataCreateProtobuf() {
         val authors = arrayOf(randBytes(20), randBytes(20), randBytes(20))
-        val tx = TrxDataCreate("Hello".toByteArray(),
+        val tx = TrxDataCreate(
+            "Hello".toByteArray(),
             authors,
             0
         )

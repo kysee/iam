@@ -1,6 +1,8 @@
 package com.a2z.kchainlib
 
 import com.a2z.kchainlib.tools.randBytes
+import com.a2z.kchainlib.trx.TrxDataCreate
+import com.a2z.kchainlib.trx.TrxPayload
 import kotlinx.serialization.ImplicitReflectionSerializer
 import org.junit.Assert
 import org.junit.Test
@@ -10,7 +12,8 @@ class JsonUnitTest {
     @ImplicitReflectionSerializer
     fun testTrxDataCreateProtobuf() {
         val authors = arrayOf(randBytes(20), randBytes(20), randBytes(20))
-        val tx = TrxDataCreate("Hello".toByteArray(),
+        val tx = TrxDataCreate(
+            "Hello".toByteArray(),
             authors,
             0
         )
