@@ -1,10 +1,7 @@
-package com.a2z.kchainlib
+package com.a2z.kchainlib.trx
 
 import com.a2z.kchainlib.tools.fromHex
 import com.a2z.kchainlib.tools.randBytes
-import com.a2z.kchainlib.trx.TrxDataCreate
-import com.a2z.kchainlib.trx.TrxPayload
-import com.a2z.kchainlib.trx.TrxTransfer
 import kotlinx.serialization.ImplicitReflectionSerializer
 import org.junit.Test
 import org.junit.Assert.*
@@ -16,10 +13,6 @@ import java.math.BigInteger
  * See [testing documentation](http://d.android.com/tools/testing).
  */
 class ProtoBufUnitTest {
-    @Test
-    fun addition_isCorrect() {
-        assertEquals(4, 2 + 2)
-    }
 
     @ImplicitReflectionSerializer
     @Test

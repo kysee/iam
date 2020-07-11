@@ -1,6 +1,5 @@
-package com.a2z.kchainlib
+package com.a2z.kchainlib.crypto
 
-import androidx.core.widget.TextViewCompat
 import com.a2z.kchainlib.tools.randBytes
 import com.a2z.kchainlib.tools.toHex
 import com.google.crypto.tink.*
@@ -17,6 +16,9 @@ import java.lang.reflect.Method
 
 
 class CryptoTest {
+    fun create_ed25519() {
+
+    }
     @Test
     fun test_keypare_export() {
         SignatureConfig.register()
