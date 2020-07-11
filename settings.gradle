@@ -1,3 +1,4 @@
+include ':kdid'
 include ':kchainlib'
 include ':app'
 rootProject.name = "iam"

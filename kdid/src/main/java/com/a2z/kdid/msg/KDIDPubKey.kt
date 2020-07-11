@@ -1,4 +1,4 @@
-package com.a2z.kchainlib.kdid
+package com.a2z.kdid.msg
 
 import com.google.crypto.tink.subtle.Hex
 import kotlinx.serialization.*

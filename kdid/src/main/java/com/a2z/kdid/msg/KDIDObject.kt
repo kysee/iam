@@ -1,4 +1,4 @@
-package com.a2z.kchainlib.kdid
+package com.a2z.kdid.msg
 
 import kotlinx.serialization.ImplicitReflectionSerializer
 import kotlinx.serialization.json.Json

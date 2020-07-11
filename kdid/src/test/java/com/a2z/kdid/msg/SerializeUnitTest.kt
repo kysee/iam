@@ -1,8 +1,8 @@
-package com.a2z.kchainlib.kdid
+package com.a2z.kdid.msg
 
-import com.a2z.kchainlib.kdid.*
 import com.a2z.kchainlib.tools.randBytes
 import com.a2z.kchainlib.tools.toHex
+import com.a2z.kdid.msg.*
 import kotlinx.serialization.ImplicitReflectionSerializer
 import org.junit.Test
 
