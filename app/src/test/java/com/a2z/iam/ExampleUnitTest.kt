@@ -1,4 +1,4 @@
-package com.a2z.kdid
+package com.a2z.iam
 
 import org.junit.Assert
 import org.junit.Test

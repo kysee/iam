@@ -3,6 +3,7 @@ package com.a2z.kchainlib.crypto
 import com.a2z.kchainlib.tools.randBytes
 import com.a2z.kchainlib.tools.toHex
 import com.google.crypto.tink.*
+import com.google.crypto.tink.config.TinkConfig
 import com.google.crypto.tink.proto.Ed25519PrivateKey
 import com.google.crypto.tink.proto.Ed25519PublicKey
 import com.google.crypto.tink.proto.KeyData
@@ -10,18 +11,31 @@ import com.google.crypto.tink.proto.Keyset
 import com.google.crypto.tink.shaded.protobuf.ByteString
 import com.google.crypto.tink.signature.Ed25519PrivateKeyManager
 import com.google.crypto.tink.signature.SignatureConfig
+import com.google.crypto.tink.subtle.Ed25519Sign
+import com.google.crypto.tink.subtle.Ed25519Verify
+import com.google.crypto.tink.subtle.Hex
 import kotlinx.io.ByteArrayOutputStream
+import org.junit.Assert
 import org.junit.Test
 import java.lang.reflect.Method
+import java.security.GeneralSecurityException
+import java.security.MessageDigest
 
 
 class CryptoTest {
+    init {
+        // Initialize Tink configuration
+        TinkConfig.register()
+        SignatureConfig.register()
+    }
+
     fun create_ed25519() {
 
     }
+
     @Test
     fun test_keypare_export() {
-        SignatureConfig.register()
+
 
         val keytmpl = Ed25519PrivateKeyManager.rawEd25519Template()
         val keysetHandle = KeysetHandle.generateNew(keytmpl)
@@ -100,5 +114,41 @@ class CryptoTest {
         val keyset2 = Keyset.newBuilder().addKey(keysetKey).build()
 //        val keysetHandle2 = KeysetHandle.
 
+    }
+
+    @Test
+    fun testEd25519() {
+        val plainText = "Text that should be signed to prevent unknown tampering with its content."
+
+        try {
+            // GENERATE NEW KEYPAIR
+            val keyPair = Ed25519Sign.KeyPair.newKeyPair()
+            val prvkey = keyPair.privateKey
+            val pubkey = keyPair.publicKey
+
+            println("prvkey: " + prvkey.size + "," + Hex.encode(prvkey))
+            println("pubkey: " + pubkey.size + "," + Hex.encode(pubkey))
+
+            val signer = Ed25519Sign(prvkey)
+            val sig = signer.sign("hello".toByteArray())
+
+            val verifier = Ed25519Verify(pubkey)
+            verifier.verify(sig, "hello".toByteArray())
+
+        } catch (e: GeneralSecurityException) {
+            Assert.fail(e.localizedMessage)
+        }
+    }
+
+    @Test
+    fun testHash() {
+        try {
+            val sha256 = MessageDigest.getInstance("SHA-256")
+            val hash = sha256.digest("hello".toByteArray())
+
+            println("hash: " + Hex.encode(hash))
+        } catch (e: Exception) {
+            Assert.fail(e.localizedMessage)
+        }
     }
 }

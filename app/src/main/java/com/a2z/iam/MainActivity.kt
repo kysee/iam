@@ -1,4 +1,4 @@
-package com.a2z.kdid
+package com.a2z.iam
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle

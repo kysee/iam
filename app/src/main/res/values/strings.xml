@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">kdid</string>
+    <string name="app_name">IAM</string>
+    <string name="create_iam">Create</string>
 </resources>

@@ -1,2 +1,2 @@
-# kdid
-About DID
+# iam
+DID Application by using KDID
