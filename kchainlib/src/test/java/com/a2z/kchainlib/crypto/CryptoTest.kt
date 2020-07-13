@@ -4,10 +4,7 @@ import com.a2z.kchainlib.tools.randBytes
 import com.a2z.kchainlib.tools.toHex
 import com.google.crypto.tink.*
 import com.google.crypto.tink.config.TinkConfig
-import com.google.crypto.tink.proto.Ed25519PrivateKey
-import com.google.crypto.tink.proto.Ed25519PublicKey
-import com.google.crypto.tink.proto.KeyData
-import com.google.crypto.tink.proto.Keyset
+import com.google.crypto.tink.proto.*
 import com.google.crypto.tink.shaded.protobuf.ByteString
 import com.google.crypto.tink.signature.Ed25519PrivateKeyManager
 import com.google.crypto.tink.signature.SignatureConfig
@@ -35,11 +32,11 @@ class CryptoTest {
 
     @Test
     fun test_keypare_export() {
-
-
+        // keypair creation
         val keytmpl = Ed25519PrivateKeyManager.rawEd25519Template()
         val keysetHandle = KeysetHandle.generateNew(keytmpl)
 
+        // export encoded keypair
         val prvKeyStream = ByteArrayOutputStream()
         val pubKeyStream = ByteArrayOutputStream()
 
@@ -55,6 +52,7 @@ class CryptoTest {
         println("encoded prv: " + toHex(prvKeyStream.toByteArray()))
         println("encoded pub: " + toHex(pubKeyStream.toByteArray()))
 
+        // export raw keypair
         val method: Method = keysetHandle.javaClass.getDeclaredMethod("getKeyset")
         method.isAccessible = true
         val keyset = method.invoke(keysetHandle) as Keyset
@@ -64,10 +62,12 @@ class CryptoTest {
         println("raw prv: " + toHex(prvKey.publicKey.keyValue.toByteArray()))
 
 
+        // sign
         val signer = keysetHandle.getPrimitive(PublicKeySign::class.java)
         val text = randBytes(100)
         val sig = signer.sign(text)
 
+        // verify
         val verifier = keysetHandle.publicKeysetHandle.getPrimitive(PublicKeyVerify::class.java)
         try {
             verifier.verify(sig, text)
@@ -79,12 +79,12 @@ class CryptoTest {
 
     @Test
     fun test_key_import() {
-        SignatureConfig.register()
+        val ed25519KeyTemplate = Ed25519PrivateKeyManager.rawEd25519Template()
 
-        val keytmpl = Ed25519PrivateKeyManager.rawEd25519Template()
-        val keysetHandle = KeysetHandle.generateNew(keytmpl)
+        // keypair creation
+        val keysetHandle = KeysetHandle.generateNew(ed25519KeyTemplate)
 
-        // Raw KeyPair : Method 2
+        // export raw keypair
         val keyset1 = CleartextKeysetHandle.getKeyset(keysetHandle)
         val prvKey1 = Ed25519PrivateKey.parseFrom(keyset1.getKey(0).getKeyData().getValue());
         println("keydata-: " + keyset1.getKey(0).getKeyData())
@@ -92,28 +92,62 @@ class CryptoTest {
         println("raw prv1: " + toHex(prvKey1.keyValue.toByteArray()))
         println("raw pub1: " + toHex(prvKey1.publicKey.keyValue.toByteArray()))
 
-
+        //
+        // import raw keypair
+        //
         val rawPrvKey = prvKey1.keyValue.toByteArray()
         val rawPubKey = prvKey1.publicKey.keyValue.toByteArray()
+
+        //    build ed25519publickey/ed25519privatekey
         val ed25519PubKey = Ed25519PublicKey.newBuilder().setKeyValue( ByteString.copyFrom(rawPubKey) ).build()
         val ed25519PrvKey = Ed25519PrivateKey.newBuilder()
             .setKeyValue( ByteString.copyFrom(rawPrvKey) )
             .setPublicKey( ed25519PubKey )
             .build()
 
-        println ("encoded? " + toHex(ed25519PrvKey.toByteArray()))
-        println ("encoded? " + toHex(ed25519PubKey.toByteArray()))
-
-        val keyData = KeyData.newBuilder()
+        //     build KeyData
+        val prvKeyData = KeyData.newBuilder()
+            .setTypeUrl(Ed25519PrivateKeyManager.rawEd25519Template().typeUrl) // type.googleapis.com/google.crypto.tink.Ed25519PrivateKey
             .setKeyMaterialType(KeyData.KeyMaterialType.ASYMMETRIC_PRIVATE)
             .setValue( ByteString.copyFrom(ed25519PrvKey.toByteArray()) )
             .build()
-        println(keyData)
+        println("KeyData(Prv): " + prvKeyData)
 
-        val keysetKey = Keyset.Key.newBuilder().setKeyData(keyData).build()
-        val keyset2 = Keyset.newBuilder().addKey(keysetKey).build()
-//        val keysetHandle2 = KeysetHandle.
+        //     build Keyset.Key & Keyset
+        val keysetKey = Keyset.Key.newBuilder()
+            .setStatus(KeyStatusType.ENABLED)
+            .setOutputPrefixType(OutputPrefixType.RAW)
+//            .setKeyId(123)
+            .setKeyData(prvKeyData).build()
+        val keyset2 = Keyset.newBuilder()
+//            .setPrimaryKeyId(124)
+            .addKey(keysetKey).build()
 
+        val keysetHandle2 = CleartextKeysetHandle.read(object : KeysetReader {
+            override fun readEncrypted(): EncryptedKeyset {
+                return EncryptedKeyset.getDefaultInstance()
+            }
+
+            override fun read(): Keyset {
+                return keyset2
+            }
+        })
+
+
+
+        // sign
+        val signer = keysetHandle2.getPrimitive(PublicKeySign::class.java)
+        val text = randBytes(100)
+        val sig = signer.sign(text)
+
+        // verify
+        val verifier = keysetHandle2.publicKeysetHandle.getPrimitive(PublicKeyVerify::class.java)
+        try {
+            verifier.verify(sig, text)
+        } catch(e: Exception) {
+            e.printStackTrace()
+            assert(false)
+        }
     }
 
     @Test
