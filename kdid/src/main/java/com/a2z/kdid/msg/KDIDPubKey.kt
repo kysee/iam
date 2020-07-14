@@ -8,7 +8,7 @@ data class KDIDPubKey (
     val id: KDID,
     val controller: KDID,
     val type: String,
-    val publicKeyPem: HexKey? = null,
+    val publicKeyHex: HexKey? = null,
     val publicKeyJwk: Jwk? = null
     ) : KDIDObject<KDIDPubKey>() {
 
@@ -29,8 +29,8 @@ data class KDIDPubKey (
             compositeOutput.encodeSerializableElement(descriptor, 0, KDID.serializer(), value.id)
             compositeOutput.encodeSerializableElement(descriptor, 1, KDID.serializer(), value.controller)
             compositeOutput.encodeStringElement(descriptor, 2, value.type)
-            if (value.publicKeyPem != null) {
-                compositeOutput.encodeSerializableElement(descriptor, 3, HexKey.serializer(), value.publicKeyPem)
+            if (value.publicKeyHex != null) {
+                compositeOutput.encodeSerializableElement(descriptor, 3, HexKey.serializer(), value.publicKeyHex)
             }
             else if (value.publicKeyJwk != null) {
                 compositeOutput.encodeSerializableElement(descriptor, 4, Jwk.serializer(), value.publicKeyJwk)
@@ -70,10 +70,20 @@ data class KDIDPubKey (
         }
     }
 
+    fun getRawPubKey(): ByteArray? {
+        if (publicKeyHex != null) {
+            return publicKeyHex.pubKey
+        }
+        else if (publicKeyJwk != null) {
+            return publicKeyJwk.pubKey
+        }
+        return null
+    }
+
 
     @Serializable
     data class HexKey(
-        val material: ByteArray
+        val pubKey: ByteArray
     ) : KDIDObject<HexKey>() {
 
         override fun equals(other: Any?): Boolean {
@@ -82,13 +92,13 @@ data class KDIDPubKey (
 
             other as HexKey
 
-            if (!material.contentEquals(other.material)) return false
+            if (!pubKey.contentEquals(other.pubKey)) return false
 
             return true
         }
 
         override fun hashCode(): Int {
-            return material.contentHashCode()
+            return pubKey.contentHashCode()
         }
 
         @Serializer(forClass = HexKey::class)
@@ -98,7 +108,7 @@ data class KDIDPubKey (
                 PrimitiveDescriptor("PubKeyPem", PrimitiveKind.STRING)
 
             override fun serialize(encoder: Encoder, obj: HexKey) {
-                encoder.encodeString(Hex.encode(obj.material))
+                encoder.encodeString(Hex.encode(obj.pubKey))
             }
 
             override fun deserialize(decoder: Decoder): HexKey {
@@ -111,7 +121,7 @@ data class KDIDPubKey (
     @Serializable
     data class Jwk(
         val crv: String,
-        val material: ByteArray,
+        val pubKey: ByteArray,
         val kty: String,
         val kid: String
     ) : KDIDObject<Jwk>() {
@@ -122,13 +132,13 @@ data class KDIDPubKey (
 
             other as Jwk
 
-            if (!material.contentEquals(other.material)) return false
+            if (!pubKey.contentEquals(other.pubKey)) return false
 
             return true
         }
 
         override fun hashCode(): Int {
-            return material.contentHashCode()
+            return pubKey.contentHashCode()
         }
 
         @Serializer(forClass = Jwk::class)
@@ -145,7 +155,7 @@ data class KDIDPubKey (
             override fun serialize(encoder: Encoder, value: Jwk) {
                 val compositeOutput = encoder.beginStructure(descriptor)
                 compositeOutput.encodeStringElement(descriptor, 0, value.crv)
-                compositeOutput.encodeStringElement(descriptor, 1, Hex.encode(value.material))
+                compositeOutput.encodeStringElement(descriptor, 1, Hex.encode(value.pubKey))
                 compositeOutput.encodeStringElement(descriptor, 2, value.kty)
                 compositeOutput.encodeStringElement(descriptor, 3, value.kid)
                 compositeOutput.endStructure(descriptor)
@@ -180,5 +190,4 @@ data class KDIDPubKey (
             }
         }
     }
-
 }

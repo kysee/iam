@@ -32,7 +32,17 @@ data class Transaction (
     @ProtoId(6) val action: Int,
     @ProtoId(7) val payload: ByteArray,
     @ProtoId(8) val pubKey: ByteArray,
-    @ProtoId(9) val sig: ByteArray ) {
+    @ProtoId(9) val sig: ByteArray? = null
+) {
+    companion object {
+        const val ACTION_TRANSFER = 1
+        const val ACTION_STAKING = 2
+        const val ACTION_UNSTAKING = 3
+        const val ACTION_DATACREATE = 4
+        const val ACTION_DATAUPDATE = 5
+        const val ACTION_DATAVERIFY = 6
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -47,7 +57,10 @@ data class Transaction (
         if (action != other.action) return false
         if (!payload.contentEquals(other.payload)) return false
         if (!pubKey.contentEquals(other.pubKey)) return false
-        if (!sig.contentEquals(other.sig)) return false
+        if (sig != null) {
+            if (other.sig == null) return false
+            if (!sig.contentEquals(other.sig)) return false
+        } else if (other.sig != null) return false
 
         return true
     }
@@ -61,7 +74,7 @@ data class Transaction (
         result = 31 * result + action
         result = 31 * result + payload.contentHashCode()
         result = 31 * result + pubKey.contentHashCode()
-        result = 31 * result + sig.contentHashCode()
+        result = 31 * result + (sig?.contentHashCode() ?: 0)
         return result
     }
 }
@@ -76,7 +89,7 @@ open class TrxPayload<T> {
     companion object {
         @ImplicitReflectionSerializer
         inline fun <reified T> decode(d: ByteArray) : T {
-            return ProtoBuf().load(serializer(), d)
+            return ProtoBuf().load<T>(serializer(), d)
         }
     }
 }

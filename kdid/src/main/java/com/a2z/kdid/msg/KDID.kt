@@ -1,6 +1,8 @@
 package com.a2z.kdid.msg
 
+import com.a2z.kchainlib.tools.toHex
 import kotlinx.serialization.*
+import java.security.MessageDigest
 
 @Serializable
 data class KDID (
@@ -12,8 +14,7 @@ data class KDID (
     }
 
     @Serializer(forClass = KDID::class)
-    companion object :
-        KSerializer<KDID> {
+    companion object : KSerializer<KDID> {
         override fun serialize(encoder: Encoder, obj: KDID) {
             encoder.encodeString(obj.did())
         }
@@ -22,6 +23,12 @@ data class KDID (
             val str = decoder.decodeString()
             val arr = str.split(":")
             return KDID(arr[1], arr[2])
+        }
+
+        fun create(pubKey: ByteArray): KDID {
+            val sha256 = MessageDigest.getInstance("SHA-256")
+            val hash = sha256.digest(pubKey)
+            return KDID("kchain", toHex(hash.copyOf(20)))
         }
     }
 }
