@@ -51,4 +51,6 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-protobuf:0.20.0'
     implementation 'org.jetbrains.kotlin:kotlin-serialization:1.3.72'
     implementation 'com.google.crypto.tink:tink-android:1.4.0-rc2'
+
+    testCompile 'org.json:json:20190722'
 }

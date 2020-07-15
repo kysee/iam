@@ -32,15 +32,39 @@ data class Transaction (
     @ProtoId(6) val action: Int,
     @ProtoId(7) val payload: ByteArray,
     @ProtoId(8) val pubKey: ByteArray,
-    @ProtoId(9) val sig: ByteArray? = null
+    @ProtoId(9) var sig: ByteArray? = null
 ) {
+
     companion object {
         const val ACTION_TRANSFER = 1
         const val ACTION_STAKING = 2
         const val ACTION_UNSTAKING = 3
-        const val ACTION_DATACREATE = 4
-        const val ACTION_DATAUPDATE = 5
-        const val ACTION_DATAVERIFY = 6
+        const val ACTION_GOVPROPOSAL = 4
+        const val ACTION_GOVVOTE = 5
+        const val ACTION_DATACREATE = 6
+        const val ACTION_DATAUPDATE = 7
+        const val ACTION_DATAVERIFY = 8
+
+        fun decode(d: ByteArray): Transaction {
+            return ProtoBuf().load(serializer(), d)
+        }
+    }
+
+    fun encode(): ByteArray {
+        return ProtoBuf(false).dump(serializer(), this)
+    }
+
+    @ImplicitReflectionSerializer
+    inline fun <reified T> getPayloadObject(): T? {
+        when {
+            action == ACTION_TRANSFER && T::class != TrxTransfer::class  -> {
+                return null
+            }
+            action == ACTION_DATACREATE && T::class != TrxDataCreate::class -> {
+                return null
+            }
+        }
+        return TrxPayload.decode<T>(this.payload)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -59,7 +83,7 @@ data class Transaction (
         if (!pubKey.contentEquals(other.pubKey)) return false
         if (sig != null) {
             if (other.sig == null) return false
-            if (!sig.contentEquals(other.sig)) return false
+            if (!sig!!.contentEquals(other.sig!!)) return false
         } else if (other.sig != null) return false
 
         return true
@@ -77,9 +101,10 @@ data class Transaction (
         result = 31 * result + (sig?.contentHashCode() ?: 0)
         return result
     }
+
 }
 
-
+@Serializable
 open class TrxPayload<T> {
     @ImplicitReflectionSerializer
     inline fun <reified T> encode(): ByteArray {

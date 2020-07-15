@@ -1,6 +1,6 @@
 package com.a2z.kdid.msg
 
-import com.a2z.kchainlib.crypto.KEd25519
+import com.a2z.kchainlib.crypto.TED25519KeyPair
 import kotlinx.serialization.*
 
 @Serializable
@@ -18,17 +18,17 @@ data class KDIDDoc (
             phoneNum: String,
             socialNum: String
         ): KDIDDoc {
-            val keyPair = KEd25519.createKeyPair()
+            val keyPair = TED25519KeyPair.createKeyPair()
 
-            val did = KDID.create(keyPair.getPubKey())
+            val did = KDID.create(keyPair.pub)
 
             return KDIDDoc(
                 did,
                 KDIDPubKey(
                     did,
                     did,
-                    keyPair.getType(),
-                    KDIDPubKey.HexKey(keyPair.getPubKey())
+                    keyPair.type,
+                    KDIDPubKey.HexKey(keyPair.pub)
                 ),
                 KDIDSubject(name, gender, birthday, phoneNum, socialNum)
             )

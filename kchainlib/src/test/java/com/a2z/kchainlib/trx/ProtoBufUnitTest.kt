@@ -2,6 +2,7 @@ package com.a2z.kchainlib.trx
 
 import com.a2z.kchainlib.tools.fromHex
 import com.a2z.kchainlib.tools.randBytes
+import com.a2z.kchainlib.tools.toHex
 import kotlinx.serialization.ImplicitReflectionSerializer
 import org.junit.Test
 import org.junit.Assert.*
@@ -31,13 +32,29 @@ class ProtoBufUnitTest {
     @Test
     fun testTrxDataCreateProtobuf() {
         val authors = arrayOf(randBytes(20), randBytes(20), randBytes(20))
-        val tx = TrxDataCreate(
+        val txPayload = TrxDataCreate(
             "Hello".toByteArray(),
             authors,
             0
         )
-        val bz = tx.encode<TrxDataCreate>()
+        val bz = txPayload.encode<TrxDataCreate>()
         val tx2 = TrxPayload.decode<TrxDataCreate>(bz)
-        assertEquals(tx, tx2)
+        assertEquals(txPayload, tx2)
+
+        val tx = Transaction(
+            1,
+            2,
+            randBytes(20),
+            randBytes(20),
+            BigInteger.TEN,
+            Transaction.ACTION_DATACREATE,
+            bz,
+            randBytes(32)
+        )
+        val txbz = tx.encode()
+        //println(toHex(txbz))
+
+        val txPayload2 = tx.getPayloadObject<TrxDataCreate>()
+        assertEquals(txPayload, txPayload2)
     }
 }
