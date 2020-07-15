@@ -1,11 +1,7 @@
 package com.a2z.kchainlib.node
 
-import com.a2z.kchainlib.account.AssetAccount
-import com.a2z.kchainlib.crypto.TED25519KeyPair
 import com.a2z.kchainlib.net.JsonRPCParams
 import com.a2z.kchainlib.net.Node
-import com.a2z.kchainlib.tools.fromHex
-import kotlinx.serialization.json.Json
 import org.junit.Test
 
 class NodeTest {

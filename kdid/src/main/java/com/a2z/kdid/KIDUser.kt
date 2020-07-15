@@ -1,8 +1,7 @@
 package com.a2z.kdid
 
-import com.a2z.kchainlib.account.AssetAccount
+import com.a2z.kchainlib.account.TAssetAccount
 import com.a2z.kchainlib.crypto.TED25519KeyPair
-import com.a2z.kchainlib.net.Node
 import com.a2z.kchainlib.tools.randBytes
 import com.a2z.kchainlib.trx.Transaction
 import com.a2z.kchainlib.trx.TrxDataCreate
@@ -35,7 +34,7 @@ class KIDUser (val name: String,
         val bz = payload.encode<TrxDataCreate>()
         val tx2 = TrxPayload.decode<TrxDataCreate>(bz)
 
-        val sender = AssetAccount(
+        val sender = TAssetAccount(
             TED25519KeyPair.createKeyPair()
         )
         val tx = Transaction(

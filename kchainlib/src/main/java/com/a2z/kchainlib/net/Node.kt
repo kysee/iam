@@ -1,11 +1,7 @@
 package com.a2z.kchainlib.net
 
-import com.a2z.kchainlib.tools.fromHex
-import com.a2z.kchainlib.tools.randBytes
+import com.a2z.kchainlib.tools.hexToByteArray
 import com.a2z.kchainlib.tools.toHex
-import com.a2z.kchainlib.trx.Transaction
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.content
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
@@ -62,25 +58,25 @@ class Node (
     fun account(addr: ByteArray): String {
         return post(JsonRPCParams (
             "account",
-            arrayOf(toHex(addr))
+            arrayOf(addr.toHex())
         ).encode())
     }
     fun syncTx(txbz: ByteArray): ByteArray {
         val reqParam = JsonRPCParams (
             "tx_sync",
-            arrayOf(toHex(txbz))
+            arrayOf(txbz.toHex())
         ).encode()
         val resp = post(reqParam)
         val jret = JSONObject(resp)
         if(jret.getInt("code") != 0) {
             throw Exception(jret.getString("log"))
         }
-        return fromHex(jret.getString("hash"))
+        return jret.getString("hash").hexToByteArray()
     }
     fun tx(txhash: ByteArray, prove: Boolean) {
         val reqParam = JsonRPCParams (
             "tx",
-            arrayOf(toHex(txhash), prove.toString())
+            arrayOf(txhash.toHex(), prove.toString())
         ).encode()
         val resp = post(reqParam)
     }

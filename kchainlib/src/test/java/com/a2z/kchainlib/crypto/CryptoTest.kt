@@ -1,8 +1,9 @@
 package com.a2z.kchainlib.crypto
 
 import com.a2z.kchainlib.tools.randBytes
-import com.a2z.kchainlib.tools.toHex
 import com.google.crypto.tink.*
+import com.google.crypto.tink.KeyTemplate
+import com.google.crypto.tink.aead.AeadKeyTemplates
 import com.google.crypto.tink.config.TinkConfig
 import com.google.crypto.tink.proto.*
 import com.google.crypto.tink.shaded.protobuf.ByteString
@@ -11,10 +12,8 @@ import com.google.crypto.tink.signature.SignatureConfig
 import com.google.crypto.tink.subtle.Ed25519Sign
 import com.google.crypto.tink.subtle.Ed25519Verify
 import com.google.crypto.tink.subtle.Hex
-import kotlinx.io.ByteArrayOutputStream
 import org.junit.Assert
 import org.junit.Test
-import java.lang.reflect.Method
 import java.security.GeneralSecurityException
 import java.security.MessageDigest
 
@@ -193,6 +192,12 @@ class CryptoTest {
         } catch (e: GeneralSecurityException) {
             Assert.fail(e.localizedMessage)
         }
+    }
+
+    @Test
+    fun test_aes_cbc() {
+        val keyTemplate: KeyTemplate = AeadKeyTemplates.AES128_GCM
+        val keysetHandle: KeysetHandle = KeysetHandle.generateNew(keyTemplate)
     }
 
     @Test

@@ -3,7 +3,7 @@ package com.a2z.kchainlib.account
 import com.a2z.kchainlib.crypto.TED25519KeyPair
 import com.a2z.kchainlib.crypto.TRawKeyPair
 import com.a2z.kchainlib.net.Node
-import com.a2z.kchainlib.tools.fromHex
+import com.a2z.kchainlib.tools.hexToByteArray
 import com.a2z.kchainlib.tools.toHex
 import com.a2z.kchainlib.trx.Transaction
 import com.a2z.kchainlib.trx.TrxTransfer
@@ -11,7 +11,7 @@ import kotlinx.serialization.ImplicitReflectionSerializer
 import org.json.JSONObject
 import java.math.BigInteger
 
-class AssetAccount (
+class TAssetAccount (
     val keyPair: TRawKeyPair?,
     val address: ByteArray = keyPair!!.address()
 ) {
@@ -20,7 +20,7 @@ class AssetAccount (
 
     constructor(
         address: String
-    ): this(null, fromHex(address))
+    ): this(null, address.hexToByteArray())
 
     constructor(
         pubKey: ByteArray
@@ -46,7 +46,7 @@ class AssetAccount (
         val resp = n.account(address!!)
         val jret = JSONObject(resp)
         jret.getJSONObject("result")?.let {
-            assert( this.address.contentEquals(fromHex(it.getString("address")!!)))
+            assert( this.address.contentEquals(it.getString("address")!!.hexToByteArray()))
             this.nonce = it.getString("nonce").toLong()
             this.balance = it.getString("balance").toBigInteger()
             return true
@@ -72,7 +72,7 @@ class AssetAccount (
         return publish(tx, n)
     }
 
-    fun createData(text: ByteArray, authors: Array<ByteArray>? = null, secure: Boolean): DataAccount {
+    fun createData(text: ByteArray, authors: Array<ByteArray>? = null, secure: Boolean): TDataAccount {
         TODO("create a data account")
     }
 
@@ -91,6 +91,6 @@ class AssetAccount (
 $intent address: %s
 $intent nonce: $nonce
 $intent balance: $balance
-}""", toHex(address))
+}""", address.toHex())
     }
 }

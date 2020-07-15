@@ -144,8 +144,6 @@ data class TrxTransfer (
         result = 31 * result + note.contentHashCode()
         return result
     }
-
-
 }
 
 @Serializable
