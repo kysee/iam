@@ -3,10 +3,12 @@ package com.a2z.kchainlib.account
 import com.a2z.kchainlib.crypto.TED25519KeyPair
 import com.a2z.kchainlib.crypto.TRawKeyPair
 import com.a2z.kchainlib.net.Node
+import com.a2z.kchainlib.tools.Tools
 import com.a2z.kchainlib.tools.hexToByteArray
 import com.a2z.kchainlib.tools.toHex
 import com.a2z.kchainlib.trx.Transaction
 import com.a2z.kchainlib.trx.TrxTransfer
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.ImplicitReflectionSerializer
 import org.json.JSONObject
 import java.math.BigInteger
@@ -42,23 +44,22 @@ class TAssetAccount (
         return tx.sig!!
     }
 
-    fun query(n:Node = Node.default): Boolean {
-        val resp = n.account(address!!)
-        val jret = JSONObject(resp)
-        jret.getJSONObject("result")?.let {
-            assert( this.address.contentEquals(it.getString("address")!!.hexToByteArray()))
-            this.nonce = it.getString("nonce").toLong()
-            this.balance = it.getString("balance").toBigInteger()
-            return true
+    fun query(n:Node = Node.default) {
+        n.account(address!!) {
+            val jret = JSONObject(it)
+            jret.getJSONObject("result")?.let {
+                assert( this.address.contentEquals(it.getString("address")!!.hexToByteArray()))
+                this.nonce = it.getString("nonce").toLong()
+                this.balance = it.getString("balance").toBigInteger()
+            }
         }
-        return false
     }
 
     @ImplicitReflectionSerializer
     fun transfer(to: ByteArray, amt: BigInteger, gas: BigInteger, n: Node = Node.default): ByteArray {
         val tx = Transaction(
             nonce,
-            0,
+            Tools.currentNanos(),
             address,
             to,
             gas,

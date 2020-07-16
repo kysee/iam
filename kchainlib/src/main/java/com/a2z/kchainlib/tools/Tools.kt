@@ -1,6 +1,8 @@
 package com.a2z.kchainlib.tools
 
+import java.security.MessageDigest
 import java.security.SecureRandom
+import java.sql.Timestamp
 
 val HEX_CHARS = "0123456789ABCDEF"
 
@@ -28,9 +30,26 @@ fun String.hexToByteArray(): ByteArray {
     return result
 }
 
-fun randBytes(n: Int): ByteArray {
-    val random = SecureRandom()
-    val bytes = ByteArray(n)
-    random.nextBytes(bytes)
-    return bytes
+class Tools {
+    companion object {
+        fun randBytes(n: Int): ByteArray {
+            val random = SecureRandom()
+            val bytes = ByteArray(n)
+            random.nextBytes(bytes)
+            return bytes
+        }
+
+        fun currentNanos(): Long {
+            return System.currentTimeMillis() * 1000
+        }
+
+        fun sha256(d: ByteArray): ByteArray {
+            val sha256 = MessageDigest.getInstance("SHA-256")
+            return sha256.digest(d)
+        }
+
+        fun address(pub: ByteArray): ByteArray {
+            return sha256(pub).sliceArray(0 .. 19)
+        }
+    }
 }

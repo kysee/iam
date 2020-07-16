@@ -1,11 +1,10 @@
-@file:UseSerializers(BigIntegerSerializer::class)
+@file:UseSerializers(TBigIntegerSerializer::class)
 package com.a2z.kchainlib.trx
 
+import com.a2z.kchainlib.tools.TBigIntegerSerializer
 import kotlinx.serialization.*
-import kotlinx.serialization.builtins.ByteArraySerializer
 import kotlinx.serialization.protobuf.ProtoId
 import java.math.BigInteger
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.protobuf.ProtoBuf
 
 /*
@@ -284,18 +283,5 @@ message TrxDataVerifyProto {
 
  */
 
-@Serializer(forClass = BigInteger::class)
-object BigIntegerSerializer: KSerializer<BigInteger> {
-    override fun serialize(encoder: Encoder, obj: BigInteger) {
-        val bz = obj.toByteArray()
-        encoder.encodeSerializableValue(ByteArraySerializer(), bz)
-    }
-
-    override fun deserialize(decoder: Decoder): BigInteger {
-        val bz = decoder.decodeSerializableValue(ByteArraySerializer())
-        val bigInt = BigInteger(bz)
-        return bigInt
-    }
-}
 
 

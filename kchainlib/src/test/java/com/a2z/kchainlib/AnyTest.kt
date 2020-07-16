@@ -6,10 +6,10 @@ import org.junit.Assert
 import org.junit.Test
 import java.math.BigInteger
 
-class Ex {
-    public val a : Int = 0
-    public val b : Long = 0
-
+class Ex(
+    val a: Int = 0,
+    val b: Int = 0
+) {
     fun Ex.test() {
         println("this is test function")
     }
@@ -20,16 +20,27 @@ fun Ex.test2() {
     println("this is test function")
 }
 
+fun <T> T.name(block: (T) -> String): String {
+    return block(this)
+}
+
+fun <T, R> babyOf(receiver: T, block: T.(String) -> R): R {
+    return receiver.block("str param")
+}
+
 class AnyTest {
     @Test
-    fun first_test() {
+    fun ext_fun_test() {
         val ex1 = Ex()
-        val ex2 = Ex::class
+        val name = ex1.name {
+            return@name "i am something"
+        }
+        println(name)
 
-        println("class: " + Ex::class)
-        println("object1: " + ex1)
-        println("object2: " + ex2)
-
-        ex1.test2()
+        val b = babyOf(ex1) {
+            this
+        }
+        println("parent: ${ex1.a}, ${ex1.b}")
+        println("baby: ${b.a}, ${b.b}")
     }
 }

@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "address": "399DE497E7F5D42D42890169A84D7C594CE0B9C8",
+  "pub_key": "C8E3E95F0AF6047AFB44372670CFD0EC151B7C2914E2F751CB96DF5ABF48FB34",
+  "cp": {
+    "ca": "aes-256-cbc",
+    "ct": "JXOUDCccX91Pfku799XQebw4CBeNMKXeYF7hOVAf+msa3702E9cPyFKDU+Bq+OBUTeaAovm776ARQ36AAR3pRmFKSsU7b2lV14K056OIS2sidlsVg88C3kJVCf2AhmQ6",
+    "ci": "ThGE6ni9HPpudf3L2yq9ww=="
+  },
+  "kp": {
+    "ka": "pbkdf2",
+    "kh": "sha256",
+    "kc": 1000,
+    "ks": "izCdGzmdsx/sbjwwWbSIwjasLJxiLmj1qSvIMZzy4tE=",
+    "kl": 32
+  }
+}

@@ -1,6 +1,9 @@
 package com.a2z.kchainlib.crypto
 
-import com.a2z.kchainlib.tools.randBytes
+import com.a2z.kchainlib.account.TAssetAccount
+import com.a2z.kchainlib.tools.Tools
+import com.a2z.kchainlib.tools.hexToByteArray
+import com.a2z.kchainlib.tools.toHex
 import com.google.crypto.tink.*
 import com.google.crypto.tink.KeyTemplate
 import com.google.crypto.tink.aead.AeadKeyTemplates
@@ -12,10 +15,19 @@ import com.google.crypto.tink.signature.SignatureConfig
 import com.google.crypto.tink.subtle.Ed25519Sign
 import com.google.crypto.tink.subtle.Ed25519Verify
 import com.google.crypto.tink.subtle.Hex
+import kotlinx.serialization.json.Json
+import org.json.JSONObject
 import org.junit.Assert
 import org.junit.Test
+import java.io.File
 import java.security.GeneralSecurityException
 import java.security.MessageDigest
+import java.util.*
+import javax.crypto.Cipher
+import javax.crypto.SecretKeyFactory
+import javax.crypto.spec.IvParameterSpec
+import javax.crypto.spec.PBEKeySpec
+import javax.crypto.spec.SecretKeySpec
 
 
 class CryptoTest {
@@ -156,7 +168,7 @@ class CryptoTest {
 
         //
         // check sign and verify by using raw keys
-        val text = randBytes(1024)
+        val text = Tools.randBytes(1024)
         assert( verify_subtle(text, sign(text, keysetHandle), rawPubKey) )
         assert( verify(text, sign_subtle(text, rawPrvKey), keysetHandle) )
 
@@ -195,9 +207,67 @@ class CryptoTest {
     }
 
     @Test
-    fun test_aes_cbc() {
-        val keyTemplate: KeyTemplate = AeadKeyTemplates.AES128_GCM
-        val keysetHandle: KeysetHandle = KeysetHandle.generateNew(keyTemplate)
+    fun test_file_read() {
+        val path = ".\\src\\test\\java\\com\\a2z\\kchainlib\\crypto\\keyparam_000.json"
+
+        try {
+            val keyStore = TKeyStore.open(path) {
+                return@open "1112"
+            }
+            assert(false)
+        } catch (e: Exception) {
+
+        }
+
+        val keyStore = TKeyStore.open(path) {
+            return@open "1111"
+        }
+
+        var acct = TAssetAccount(
+            TED25519KeyPair(keyStore.getMaterial())
+        )
+        acct.query()
+        println("$acct")
+    }
+
+    @Test
+    fun test_read_file_aes_cbc() {
+        val path = ".\\src\\test\\java\\com\\a2z\\kchainlib\\crypto\\keyparam_000.json"
+        val jret = JSONObject(File(path).readText(Charsets.UTF_8))
+
+        //
+        val addr = jret.getString("address").hexToByteArray()
+        val pubKey = jret.getString("pub_key")!!.hexToByteArray()
+        assert(addr.contentEquals(Tools.address(pubKey)))
+
+        // PBKDF2
+        val salt = Base64.getDecoder().decode(
+            jret.getJSONObject("kp")!!.getString("ks")
+        )!!
+        val iter = jret.getJSONObject("kp")!!.getInt("kc")
+        val klen = jret.getJSONObject("kp")!!.getInt("kl")
+
+        val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+        val spec = PBEKeySpec("1111".toCharArray(), salt, iter, klen*8)
+        val sk = SecretKeySpec(factory.generateSecret(spec).encoded, "AES")
+
+
+        val encPrvKey = Base64.getDecoder().decode(
+            jret.getJSONObject("cp")!!.getString("ct")
+        )!!
+        val iv = IvParameterSpec(
+            Base64.getDecoder().decode(
+                jret.getJSONObject("cp")!!.getString("ci")
+            )
+        )
+
+        val c = Cipher.getInstance("AES/CBC/PKCS5Padding")
+        c.init(Cipher.DECRYPT_MODE, sk, iv)
+        val prvKeybz = c.doFinal(encPrvKey)!!
+        val prvKey = prvKeybz.sliceArray(iv.iv.size until iv.iv.size + 32)
+
+        assert(prvKeybz.sliceArray(iv.iv.indices).contentEquals(iv.iv))
+        assert(prvKeybz.sliceArray(iv.iv.size + 32 until prvKeybz.size).contentEquals(pubKey))
     }
 
     @Test

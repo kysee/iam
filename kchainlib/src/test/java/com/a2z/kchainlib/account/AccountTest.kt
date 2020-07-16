@@ -1,6 +1,6 @@
 package com.a2z.kchainlib.account
 
-import com.a2z.kchainlib.tools.randBytes
+import com.a2z.kchainlib.tools.Tools
 import com.a2z.kchainlib.tools.toHex
 import kotlinx.serialization.ImplicitReflectionSerializer
 import org.junit.Test
@@ -13,7 +13,7 @@ class AccountTest {
         val acct = TAssetAccount("2FF2C92CEFD4AD5F220CBF1D4344BC8159C5A3B4")
         assert(acct.query())
 
-        val txhash = acct.transfer(randBytes(20), BigInteger.TEN, BigInteger.TEN)
+        val txhash = acct.transfer(Tools.randBytes(20), BigInteger.TEN, BigInteger.TEN)
         println("txhash: " + txhash.toHex())
 
         "0ABCEF".toByteArray()
