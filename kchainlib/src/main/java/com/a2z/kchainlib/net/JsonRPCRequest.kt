@@ -3,11 +3,10 @@ package com.a2z.kchainlib.net
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
-import kotlinx.serialization.parse
 
 
 @Serializable
-data class JsonRPCParams(
+data class JsonRPCRequest(
     val version: String,
     val id: String,
     val method: String,
@@ -23,7 +22,7 @@ data class JsonRPCParams(
     ): this("2.0", "dontcare", method, null)
 
     fun encode(): String {
-        return Json(jsonConf).stringify(JsonRPCParams.serializer(), this)
+        return Json(jsonConf).stringify(JsonRPCRequest.serializer(), this)
     }
 
     companion object {
@@ -40,8 +39,8 @@ data class JsonRPCParams(
 //            classDiscriminator = JsonConfiguration.defaultDiscriminator
         )
 
-        fun decode(s: String): JsonRPCParams {
-            return Json(jsonConf).parse(JsonRPCParams.serializer(), s)
+        fun decode(s: String): JsonRPCRequest {
+            return Json(jsonConf).parse(JsonRPCRequest.serializer(), s)
         }
     }
 
@@ -49,7 +48,7 @@ data class JsonRPCParams(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as JsonRPCParams
+        other as JsonRPCRequest
 
         if (version != other.version) return false
         if (id != other.id) return false

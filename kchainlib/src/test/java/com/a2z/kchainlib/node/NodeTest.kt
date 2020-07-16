@@ -1,13 +1,13 @@
 package com.a2z.kchainlib.node
 
-import com.a2z.kchainlib.net.JsonRPCParams
+import com.a2z.kchainlib.net.JsonRPCRequest
 import com.a2z.kchainlib.net.Node
 import org.junit.Test
 
 class NodeTest {
     @Test
     fun test_jsonrpc() {
-        val jrp = JsonRPCParams("2.0", "1", "method", arrayOf("params1", "params2"))
+        val jrp = JsonRPCRequest("2.0", "1", "method", arrayOf("params1", "params2"))
         val json = jrp.encode()
         println(json)
     }

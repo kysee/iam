@@ -1,8 +1,10 @@
 package com.a2z.kchainlib.account
 
+import com.a2z.kchainlib.crypto.TKeyStore
 import com.a2z.kchainlib.tools.Tools
 import com.a2z.kchainlib.tools.toHex
 import kotlinx.serialization.ImplicitReflectionSerializer
+import org.json.JSONObject
 import org.junit.Test
 import java.math.BigInteger
 
@@ -10,13 +12,29 @@ class AccountTest {
     @ImplicitReflectionSerializer
     @Test
     fun test_transfer() {
-        val acct = TAssetAccount("2FF2C92CEFD4AD5F220CBF1D4344BC8159C5A3B4")
-        assert(acct.query())
+        val path = "./src/test/java/com/a2z/kchainlib/crypto/keyparam_2C7D67FA63368DBEBB20B90D69313E87021B78F3.json"
 
-        val txhash = acct.transfer(Tools.randBytes(20), BigInteger.TEN, BigInteger.TEN)
-        println("txhash: " + txhash.toHex())
+        val acct = TAssetAccount(
+            TKeyStore.open(path) {
+                "1111"
+            }
+        )
+        acct.query()
+        with(acct) {
+            println(this)
+        }
 
-        "0ABCEF".toByteArray()
+        acct.transfer(
+            Tools.randBytes(20),
+            BigInteger.TEN,
+            BigInteger.TEN).let {
+            println("txhash: " + it.toHex())
+        }
+
+        acct.query()
+        with(acct) {
+            println(this)
+        }
     }
 }
 
