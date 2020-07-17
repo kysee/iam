@@ -1,7 +1,7 @@
 package com.a2z.kchainlib.trx
 
-import com.a2z.kchainlib.tools.Tools
-import com.a2z.kchainlib.tools.hexToByteArray
+import com.a2z.kchainlib.common.Tools
+import com.a2z.kchainlib.common.hexToByteArray
 import kotlinx.serialization.ImplicitReflectionSerializer
 import org.junit.Test
 import org.junit.Assert.*
@@ -53,7 +53,7 @@ class ProtoBufUnitTest {
             bz,
             Tools.randBytes(32)
         )
-        val txbz = tx.encode()
+//        val txbz = tx.encode()
         //println(toHex(txbz))
 
         val txPayload2 = tx.getPayloadObject<TrxDataCreate>()

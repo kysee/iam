@@ -1,15 +1,14 @@
-package com.a2z.kchainlib.tools
+package com.a2z.kchainlib.common
 
 import kotlinx.serialization.*
 import kotlinx.serialization.builtins.ByteArraySerializer
-import kotlinx.serialization.internal.ByteDescriptor
 import java.math.BigInteger
 
 
 //@Serializer(forClass = ByteArray::class)
 object THexSerializer : KSerializer<ByteArray> {
-    override fun serialize(encoder: Encoder, obj: ByteArray) {
-        encoder.encodeString(obj.toHex())
+    override fun serialize(encoder: Encoder, value: ByteArray) {
+        encoder.encodeString(value.toHex())
     }
 
     override fun deserialize(decoder: Decoder): ByteArray {
@@ -21,9 +20,9 @@ object THexSerializer : KSerializer<ByteArray> {
 
 //@Serializer(forClass = ByteArray::class)
 object TBase64Serializer : KSerializer<ByteArray> {
-    override fun serialize(encoder: Encoder, obj: ByteArray) {
+    override fun serialize(encoder: Encoder, value: ByteArray) {
         encoder.encodeString(
-            com.google.crypto.tink.subtle.Base64.encode(obj)
+            com.google.crypto.tink.subtle.Base64.encode(value)
         )
     }
 
@@ -38,8 +37,8 @@ object TBase64Serializer : KSerializer<ByteArray> {
 
 @Serializer(forClass = BigInteger::class)
 object TBigIntegerSerializer: KSerializer<BigInteger> {
-    override fun serialize(encoder: Encoder, obj: BigInteger) {
-        val bz = obj.toByteArray()
+    override fun serialize(encoder: Encoder, value: BigInteger) {
+        val bz = value.toByteArray()
         encoder.encodeSerializableValue(ByteArraySerializer(), bz)
     }
 

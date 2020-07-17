@@ -9,7 +9,7 @@ import java.security.GeneralSecurityException
 import java.security.MessageDigest
 
 
-class TED25519KeyPair(
+class TRawKeyPairED25519 (
     override val prv: ByteArray?,
     override val pub: ByteArray,
     override val type: String = "ed25519"
@@ -18,12 +18,12 @@ class TED25519KeyPair(
     constructor(material: ByteArray) : this(material.copyOf(32), material.copyOfRange(32, 64), "ed25519-keypair")
 
     companion object {
-        fun createKeyPair(): TED25519KeyPair {
+        fun createKeyPair(): TRawKeyPairED25519 {
             val keysetHandle = KeysetHandle.generateNew(Ed25519PrivateKeyManager.rawEd25519Template())
             val keyset = CleartextKeysetHandle.getKeyset(keysetHandle)
-            val prvKey = Ed25519PrivateKey.parseFrom(keyset.getKey(0).getKeyData().getValue());
+            val prvKey = Ed25519PrivateKey.parseFrom(keyset.getKey(0).getKeyData().getValue())
 
-            return TED25519KeyPair(
+            return TRawKeyPairED25519(
                 prvKey.keyValue.toByteArray(),
                 prvKey.publicKey.keyValue.toByteArray(),
                 "ed25519-keypair"
@@ -40,18 +40,18 @@ class TED25519KeyPair(
     }
 
     override fun verify(sig: ByteArray, text: ByteArray): Boolean {
-        if (pub == null) {
-            throw GeneralSecurityException("not found public key")
-        }
+//        if (pub == null) {
+//            throw GeneralSecurityException("not found public key")
+//        }
         val verifier = Ed25519Verify(pub)
         verifier.verify(sig, text)
         return true
     }
 
     override fun address(): ByteArray {
-        if (pub == null) {
-            throw GeneralSecurityException("not found public key")
-        }
+//        if (pub == null) {
+//            throw GeneralSecurityException("not found public key")
+//        }
         val sha256 = MessageDigest.getInstance("SHA-256")
         return sha256.digest(pub).copyOf(20)
     }

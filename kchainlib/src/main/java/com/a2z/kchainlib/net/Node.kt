@@ -1,6 +1,10 @@
 package com.a2z.kchainlib.net
 
-import com.a2z.kchainlib.tools.toHex
+import com.a2z.kchainlib.common.TResult
+import com.a2z.kchainlib.common.toHex
+import kotlinx.serialization.ImplicitReflectionSerializer
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
@@ -19,16 +23,16 @@ class Node (
         }
     }
 
-    fun post(req: String): String {
+    fun post(req: String): TResult<JSONObject> = try {
         val rpcServer = this
 
         val mURL = URL(rpcServer.nodeUrl)
-        (mURL.openConnection() as HttpURLConnection)?.run {
+        (mURL.openConnection() as HttpURLConnection).run {
             // optional default is GET
             requestMethod = "POST"
             doOutput = true
 
-            val wr = java.io.OutputStreamWriter(getOutputStream());
+            val wr = java.io.OutputStreamWriter(getOutputStream())
             wr.write(req);
             wr.flush();
 
@@ -36,7 +40,7 @@ class Node (
 //            kotlin.io.println("Response Code : $responseCode")
 
             if(responseCode != HttpURLConnection.HTTP_OK) {
-                error("http error: code($responseCode), msg($responseMessage)")
+                return TResult.Error(responseCode, responseMessage)
             }
 
             java.io.BufferedReader(java.io.InputStreamReader(inputStream)).use {
@@ -47,44 +51,54 @@ class Node (
                     response.append(inputLine)
                     inputLine = it.readLine()
                 }
-//                kotlin.io.println("Response : $response")
+                //kotlin.io.println("Response : $response")
 
-                val jret = JSONObject(response.toString())
-                jret.optJSONObject("error")?.let {
-                    error("jsonrpc error: code(${it.getInt("code")}), message(${it.getString("message")})")
+                val jsonrpcResp = JSONObject(response.toString())
+                jsonrpcResp.optJSONObject("error")?.let {
+                    return TResult.Error(it.getInt("code"), it.getString("message") + " - " + it.getString("data"))
                 }
 
-                return jret.getJSONObject("result").toString()
+                return TResult.Success(jsonrpcResp.getJSONObject("result"))
             }
         }
+    } catch (ex: Exception) {
+        TResult.Error(
+            message = ex.message?: "unknown error",
+            cause = ex
+        )
     }
 
-    fun lastblock(): String {
-        return post(JsonRPCRequest (
+    fun lastblock(): TResult<JSONObject> {
+        return post(JsonRPCReq (
             "last_block"
         ).encode())
     }
-    fun account(addr: ByteArray): String {
+
+    fun account(addr: ByteArray): TResult<JSONObject> {
         return post(
-            JsonRPCRequest (
+            JsonRPCReq (
                 "account",
-                arrayOf(addr.toHex())
+                listOf(JsonPrimitive(addr.toHex()))
             ).encode()
         )
     }
-    fun syncTx(txbz: ByteArray): String {
+
+    fun syncTx(txbz: ByteArray): TResult<JSONObject> {
         return post (
-            JsonRPCRequest (
+            JsonRPCReq (
             "tx_sync",
-                arrayOf(txbz.toHex())
+                listOf(JsonPrimitive(txbz.toHex()))
             ).encode()
         )
     }
-    fun tx(txhash: ByteArray, prove: Boolean) {
-        val reqParam = JsonRPCRequest (
+
+    fun tx(txhash: ByteArray, prove: Boolean): TResult<JSONObject> {
+        return post(JsonRPCReq (
             "tx",
-            arrayOf(txhash.toHex(), prove.toString())
-        ).encode()
-        val resp = post(reqParam)
+            listOf(
+                JsonPrimitive(txhash.toHex()),
+                JsonPrimitive(prove)
+            )
+        ).encode())
     }
 }

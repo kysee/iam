@@ -1,7 +1,7 @@
 @file:UseSerializers(TBigIntegerSerializer::class)
 package com.a2z.kchainlib.trx
 
-import com.a2z.kchainlib.tools.TBigIntegerSerializer
+import com.a2z.kchainlib.common.TBigIntegerSerializer
 import kotlinx.serialization.*
 import kotlinx.serialization.protobuf.ProtoId
 import java.math.BigInteger
@@ -121,10 +121,9 @@ open class TrxPayload<T> {
 @Serializable
 data class TrxTransfer (
     @ProtoId(1) val amount: BigInteger,
-    @ProtoId(2) val note: ByteArray
+    @ProtoId(2) val note: ByteArray? = null
 ) : TrxPayload<TrxTransfer>() {
     constructor() : this(BigInteger.ZERO, ByteArray(0)) {}
-
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -132,17 +131,21 @@ data class TrxTransfer (
 
         other as TrxTransfer
 
-        if (amount.equals(other)) return false
-        if (!note.contentEquals(other.note)) return false
+        if (amount != other.amount) return false
+        if (note != null) {
+            if (other.note == null) return false
+            if (!note.contentEquals(other.note)) return false
+        } else if (other.note != null) return false
 
         return true
     }
 
     override fun hashCode(): Int {
         var result = amount.hashCode()
-        result = 31 * result + note.contentHashCode()
+        result = 31 * result + (note?.contentHashCode() ?: 0)
         return result
     }
+
 }
 
 @Serializable

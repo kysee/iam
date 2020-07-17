@@ -1,19 +1,11 @@
 package com.a2z.kchainlib
 
-import com.a2z.kchainlib.tools.toHex
-import kotlinx.serialization.protobuf.ProtoBuf
-import org.junit.Assert
 import org.junit.Test
-import java.math.BigInteger
 
 class Ex(
     val a: Int = 0,
     val b: Int = 0
-) {
-    fun Ex.test() {
-        println("this is test function")
-    }
-}
+)
 
 fun Ex.test2() {
     println("this: " + this)

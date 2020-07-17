@@ -1,6 +1,6 @@
 package com.a2z.kdid.msg
 
-import com.a2z.kchainlib.crypto.TED25519KeyPair
+import com.a2z.kchainlib.crypto.TRawKeyPairED25519
 import kotlinx.serialization.*
 
 @Serializable
@@ -18,7 +18,7 @@ data class KDIDDoc (
             phoneNum: String,
             socialNum: String
         ): KDIDDoc {
-            val keyPair = TED25519KeyPair.createKeyPair()
+            val keyPair = TRawKeyPairED25519.createKeyPair()
 
             val did = KDID.create(keyPair.pub)
 

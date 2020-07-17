@@ -1,8 +1,7 @@
 package com.a2z.kdid.msg
 
-import com.a2z.kchainlib.tools.randBytes
-import com.a2z.kchainlib.tools.toHex
-import com.a2z.kdid.msg.*
+import com.a2z.kchainlib.common.Tools
+import com.a2z.kchainlib.common.toHex
 import kotlinx.serialization.ImplicitReflectionSerializer
 import org.junit.Test
 
@@ -19,7 +18,7 @@ class SerializeUnitTest {
     @Test
     fun kdiddoc_json_serialization() {
         val subjectId =
-            KDID("kchain", toHex(randBytes(20)))
+            KDID("kchain", Tools.randBytes(20).toHex())
         val subject = KDIDSubject(
             "Yongseok Kwon",
             "M",
@@ -29,16 +28,16 @@ class SerializeUnitTest {
         )
 
         val pubKeyId =
-            KDID("kchain", toHex(randBytes(20)))
+            KDID("kchain", Tools.randBytes(20).toHex())
         val controllerId =
-            KDID("kchain", toHex(randBytes(20)))
+            KDID("kchain", Tools.randBytes(20).toHex())
         val pubKey = KDIDPubKey(
             id = pubKeyId,
             type = "Ed25519VerificationKey2018",
             controller = controllerId,
             publicKeyJwk = KDIDPubKey.Jwk(
                 "ed25519",
-                randBytes(32),
+                Tools.randBytes(32),
                 "kty",
                 pubKeyId.did()
             )

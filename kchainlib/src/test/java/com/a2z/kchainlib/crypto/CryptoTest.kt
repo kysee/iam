@@ -1,12 +1,9 @@
 package com.a2z.kchainlib.crypto
 
 import com.a2z.kchainlib.account.TAssetAccount
-import com.a2z.kchainlib.tools.Tools
-import com.a2z.kchainlib.tools.hexToByteArray
-import com.a2z.kchainlib.tools.toHex
+import com.a2z.kchainlib.common.Tools
+import com.a2z.kchainlib.common.hexToByteArray
 import com.google.crypto.tink.*
-import com.google.crypto.tink.KeyTemplate
-import com.google.crypto.tink.aead.AeadKeyTemplates
 import com.google.crypto.tink.config.TinkConfig
 import com.google.crypto.tink.proto.*
 import com.google.crypto.tink.shaded.protobuf.ByteString
@@ -15,7 +12,6 @@ import com.google.crypto.tink.signature.SignatureConfig
 import com.google.crypto.tink.subtle.Ed25519Sign
 import com.google.crypto.tink.subtle.Ed25519Verify
 import com.google.crypto.tink.subtle.Hex
-import kotlinx.serialization.json.Json
 import org.json.JSONObject
 import org.junit.Assert
 import org.junit.Test
@@ -79,7 +75,7 @@ class CryptoTest {
     fun export_raw_keypair(keysetHandle: KeysetHandle): ByteArray {
         // method 1
         val keyset = CleartextKeysetHandle.getKeyset(keysetHandle)
-        val prvKey = Ed25519PrivateKey.parseFrom(keyset.getKey(0).getKeyData().getValue());
+        val prvKey = Ed25519PrivateKey.parseFrom(keyset.getKey(0).getKeyData().getValue())
 //        println("keydata-: " + keyset.getKey(0).getKeyData())
 //        println("--- ----: " + toHex(keyset.getKey(0).getKeyData().getValue().toByteArray()))
 //        println("raw prv1: " + toHex(prvKey.keyValue.toByteArray()))
@@ -155,7 +151,7 @@ class CryptoTest {
 
     @Test
     fun test_key_import() {
-        val ed25519KeyTemplate = Ed25519PrivateKeyManager.rawEd25519Template()
+//        val ed25519KeyTemplate = Ed25519PrivateKeyManager.rawEd25519Template()
 
         // keypair creation
         val keysetHandle = create_ed25519()
@@ -196,10 +192,10 @@ class CryptoTest {
 //            println("pubkey: " + pubkey.size + "," + Hex.encode(pubkey))
 
             val signer = Ed25519Sign(prvkey)
-            val sig = signer.sign("hello".toByteArray())
+            val sig = signer.sign(plainText.toByteArray())
 
             val verifier = Ed25519Verify(pubkey)
-            verifier.verify(sig, "hello".toByteArray())
+            verifier.verify(sig, plainText.toByteArray())
 
         } catch (e: GeneralSecurityException) {
             Assert.fail(e.localizedMessage)
@@ -209,23 +205,9 @@ class CryptoTest {
     @Test
     fun test_file_read() {
         val path = ".\\src\\test\\java\\com\\a2z\\kchainlib\\crypto\\keyparam_000.json"
+        val keyStore = TKeyStore.open(path)
 
-        try {
-            val keyStore = TKeyStore.open(path) {
-                return@open "1112"
-            }
-            assert(false)
-        } catch (e: Exception) {
-
-        }
-
-        val keyStore = TKeyStore.open(path) {
-            return@open "1111"
-        }
-
-        var acct = TAssetAccount(
-            TED25519KeyPair(keyStore.getMaterial())
-        )
+        val acct = TAssetAccount(keyStore)
         acct.query()
         println("$acct")
     }
@@ -237,15 +219,15 @@ class CryptoTest {
 
         //
         val addr = jret.getString("address").hexToByteArray()
-        val pubKey = jret.getString("pub_key")!!.hexToByteArray()
+        val pubKey = jret.getString("pub_key").hexToByteArray()
         assert(addr.contentEquals(Tools.address(pubKey)))
 
         // PBKDF2
         val salt = Base64.getDecoder().decode(
-            jret.getJSONObject("kp")!!.getString("ks")
+            jret.getJSONObject("kp").getString("ks")
         )!!
-        val iter = jret.getJSONObject("kp")!!.getInt("kc")
-        val klen = jret.getJSONObject("kp")!!.getInt("kl")
+        val iter = jret.getJSONObject("kp").getInt("kc")
+        val klen = jret.getJSONObject("kp").getInt("kl")
 
         val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
         val spec = PBEKeySpec("1111".toCharArray(), salt, iter, klen*8)
@@ -253,11 +235,11 @@ class CryptoTest {
 
 
         val encPrvKey = Base64.getDecoder().decode(
-            jret.getJSONObject("cp")!!.getString("ct")
+            jret.getJSONObject("cp").getString("ct")
         )!!
         val iv = IvParameterSpec(
             Base64.getDecoder().decode(
-                jret.getJSONObject("cp")!!.getString("ci")
+                jret.getJSONObject("cp").getString("ci")
             )
         )
 
@@ -265,7 +247,7 @@ class CryptoTest {
         c.init(Cipher.DECRYPT_MODE, sk, iv)
         val prvKeybz = c.doFinal(encPrvKey)!!
         val prvKey = prvKeybz.sliceArray(iv.iv.size until iv.iv.size + 32)
-
+        assert(prvKey.size == 32)
         assert(prvKeybz.sliceArray(iv.iv.indices).contentEquals(iv.iv))
         assert(prvKeybz.sliceArray(iv.iv.size + 32 until prvKeybz.size).contentEquals(pubKey))
     }

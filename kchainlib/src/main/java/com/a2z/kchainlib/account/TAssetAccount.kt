@@ -1,48 +1,20 @@
 package com.a2z.kchainlib.account
 
-import com.a2z.kchainlib.crypto.TED25519KeyPair
+import com.a2z.kchainlib.common.*
 import com.a2z.kchainlib.crypto.TKeyStore
-import com.a2z.kchainlib.crypto.TRawKeyPair
 import com.a2z.kchainlib.net.Node
-import com.a2z.kchainlib.tools.Tools
-import com.a2z.kchainlib.tools.hexToByteArray
-import com.a2z.kchainlib.tools.toHex
 import com.a2z.kchainlib.trx.Transaction
 import com.a2z.kchainlib.trx.TrxTransfer
 import kotlinx.serialization.ImplicitReflectionSerializer
-import kotlinx.serialization.builtins.ByteArraySerializer
 import org.json.JSONObject
 import java.math.BigInteger
-import java.security.KeyStore
 
 class TAssetAccount (
-    val keyPair: TRawKeyPair?,
-    val address: ByteArray = keyPair!!.address()
+    val ks: TKeyStore,
+    val address: ByteArray = Tools.address(ks.pub)
 ) {
     private var nonce: Long = 0
     private var balance: BigInteger = BigInteger.ZERO
-
-    @Deprecated(
-        message = "Deprecated",
-        level = DeprecationLevel.ERROR,
-        replaceWith = ReplaceWith("first constructor", imports = ["com.a2z.kchainlib.account.TAssetAccount"])
-    )
-    constructor(
-        address: String
-    ): this(null, address.hexToByteArray())
-
-    @Deprecated(
-        message = "Deprecated",
-        level = DeprecationLevel.ERROR,
-        replaceWith = ReplaceWith("first constructor", imports = ["com.a2z.kchainlib.account.TAssetAccount"])
-    )
-    constructor(
-        pubKey: ByteArray
-    ): this(TED25519KeyPair(null, pubKey, "ed25519"))
-
-    constructor(
-        ks: TKeyStore
-    ) : this(TED25519KeyPair(ks.getMaterial()))
 
     fun getNonce(): Long {
         return nonce
@@ -52,25 +24,33 @@ class TAssetAccount (
         return balance
     }
 
-    fun sign(tx: Transaction): ByteArray {
+    fun sign(tx: Transaction, getCredential:()->String): ByteArray {
         tx.sig = null
         val txbz = tx.encode()
 
-        tx.sig = keyPair!!.sign(txbz)
-        return tx.sig!!
+        return ks.sign(txbz, getCredential)
     }
 
-    fun query(n:Node = Node.default) {
-        JSONObject(
-            n.account(address!!)
-        ).let {
-            this.nonce = it.getLong("nonce")
-            this.balance = it.getString("balance").toBigInteger()
-        }
+    fun query(n:Node = Node.default): TResult.Error? {
+        return when (val ret = n.account(address)) {
+            is TResult.Success -> {
+                this.nonce = ret.value.getLong("nonce")
+                this.balance = ret.value.getString("balance").toBigInteger()
+                null
+            }
+            is TResult.Error -> ret
+        }.exhaustive
     }
 
     @ImplicitReflectionSerializer
-    fun transfer(to: ByteArray, amt: BigInteger, gas: BigInteger, n: Node = Node.default): ByteArray {
+    fun transfer(
+        to: ByteArray,
+        amt: BigInteger, gas: BigInteger,
+        note: String? = null,
+        n: Node = Node.default,
+        getCredential:()->String
+    ): TResult<ByteArray> {
+
         val tx = Transaction(
             nonce+1,
             Tools.currentNanos(),
@@ -79,28 +59,29 @@ class TAssetAccount (
             gas,
             Transaction.ACTION_TRANSFER,
             TrxTransfer(
-                BigInteger("10000000000000000"),
-                "Hello".toByteArray()
+                amt,
+                note?.toByteArray()
             ).encode<TrxTransfer>(),
-            keyPair!!.pub
+            ks.pub
         )
-        return publish(tx, n)
+        return publish(tx, n, getCredential)
     }
 
     fun createData(text: ByteArray, authors: Array<ByteArray>? = null, secure: Boolean): TDataAccount {
         TODO("create a data account")
     }
 
-
-    fun publish(tx: Transaction, n: Node = Node.default): ByteArray {
-        sign(tx)
-        JSONObject(
-            n.syncTx(tx.encode())
-        ).let {
-            if (it.getInt("code") != 0) {
-                error("checktx: code(${it.getInt("code")}, log(${it.getString("log")}")
+    @ImplicitReflectionSerializer
+    fun publish(tx: Transaction, n: Node = Node.default, getCredential:()->String): TResult<ByteArray> {
+        tx.sig = sign(tx, getCredential)
+        return when (val ret = n.syncTx(tx.encode())) {
+            is TResult.Success -> {
+                if(ret.value.getInt("code") != 0) {
+                    return TResult.Error(ret.value.getInt("code"), ret.value.getString("log"))
+                }
+                return TResult.Success(ret.value.getString("hash").hexToByteArray())
             }
-            return it.getString("hash").hexToByteArray()
+            is TResult.Error -> ret
         }
     }
 
