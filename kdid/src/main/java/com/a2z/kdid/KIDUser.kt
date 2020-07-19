@@ -20,12 +20,12 @@ class KIDUser (val name: String,
                val socialNum: String
 ) {
 
-    private lateinit var kdid: KDID
+    private lateinit var idDoc: KDIDDoc
 
     @ImplicitReflectionSerializer
     fun publish(): ByteArray? {
-        val doc = KDIDDoc.create(name, gender, birthday, phoneNum, socialNum)
-        val encoded = doc.encode<KDIDDoc>()
+        idDoc = KDIDDoc.create(name, gender, birthday, phoneNum, socialNum)
+        val encoded = idDoc.encode<KDIDDoc>()
 
         val authors = arrayOf(Tools.randBytes(20), Tools.randBytes(20), Tools.randBytes(20))
         val payload = TrxDataCreate(
@@ -33,8 +33,6 @@ class KIDUser (val name: String,
             authors,
             0
         )
-//        val bz = payload.encode<TrxDataCreate>()
-//        val tx2 = TrxPayload.decode<TrxDataCreate>(bz)
 
         val sender = TAssetAccount(
             TKeyStore.create() {
@@ -49,7 +47,7 @@ class KIDUser (val name: String,
             BigInteger.TEN,
             Transaction.ACTION_DATACREATE,
             payload.encode<TrxDataCreate>(),
-            doc.publicKey.getRawPubKey()!!
+            idDoc.publicKey.getRawPubKey()!!
         )
 
         // return txhash

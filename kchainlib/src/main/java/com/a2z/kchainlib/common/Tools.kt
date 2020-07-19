@@ -28,6 +28,10 @@ class Tools {
         fun address(pub: ByteArray): ByteArray {
             return sha256(pub).sliceArray(0 .. 19)
         }
+
+        fun dataAddress(c: ByteArray, t:ByteArray): ByteArray {
+            return sha256(c+t).sliceArray(0..19)
+        }
     }
 }
 

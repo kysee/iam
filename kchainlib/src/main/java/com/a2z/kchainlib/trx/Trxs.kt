@@ -2,7 +2,10 @@
 package com.a2z.kchainlib.trx
 
 import com.a2z.kchainlib.common.TBigIntegerSerializer
+import com.a2z.kchainlib.common.TResult
+import com.a2z.kchainlib.net.Node
 import kotlinx.serialization.*
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.protobuf.ProtoId
 import java.math.BigInteger
 import kotlinx.serialization.protobuf.ProtoBuf
@@ -46,6 +49,25 @@ data class Transaction (
 
         fun decode(d: ByteArray): Transaction {
             return ProtoBuf().load(serializer(), d)
+        }
+
+        fun waitFor(txhash: ByteArray, limit: Int = 3, notify: (TResult<JsonObject>)->Unit) {
+            var cnt = limit
+
+            loop@ while(cnt > 0) {
+                cnt--
+                when(val txret = Node.default.tx(txhash, false)) {
+                    is TResult.Success -> {
+                        notify(txret)
+                        break@loop
+                    }
+                    is TResult.Error -> {
+                        if(cnt == 0) notify(TResult.Error(-9999, "timeout"))
+                    } // not found tx or other errors
+                }
+
+                Thread.sleep(1000)
+            }
         }
     }
 

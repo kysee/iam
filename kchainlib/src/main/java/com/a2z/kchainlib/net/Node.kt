@@ -3,6 +3,8 @@ package com.a2z.kchainlib.net
 import com.a2z.kchainlib.common.TResult
 import com.a2z.kchainlib.common.toHex
 import kotlinx.serialization.ImplicitReflectionSerializer
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import org.json.JSONObject
@@ -23,7 +25,7 @@ class Node (
         }
     }
 
-    fun post(req: String): TResult<JSONObject> = try {
+    fun post(req: String): TResult<JsonObject> = try {
         val rpcServer = this
 
         val mURL = URL(rpcServer.nodeUrl)
@@ -52,13 +54,16 @@ class Node (
                     inputLine = it.readLine()
                 }
                 //kotlin.io.println("Response : $response")
+                val jsonrpcResp = Json.parse(JsonObject.serializer(), response.toString())
+                jsonrpcResp.getObjectOrNull("error")?.let {
+                    it.getPrimitive("code").int
 
-                val jsonrpcResp = JSONObject(response.toString())
-                jsonrpcResp.optJSONObject("error")?.let {
-                    return TResult.Error(it.getInt("code"), it.getString("message") + " - " + it.getString("data"))
+                    return TResult.Error(
+                        it.getPrimitive("code").int,
+                        it.getPrimitive("message").content + " - " + it.getPrimitive("data").contentOrNull)
                 }
 
-                return TResult.Success(jsonrpcResp.getJSONObject("result"))
+                return TResult.Success(jsonrpcResp.getObject("result"))
             }
         }
     } catch (ex: Exception) {
@@ -68,13 +73,13 @@ class Node (
         )
     }
 
-    fun lastblock(): TResult<JSONObject> {
+    fun lastblock(): TResult<JsonObject> {
         return post(JsonRPCReq (
             "last_block"
         ).encode())
     }
 
-    fun account(addr: ByteArray): TResult<JSONObject> {
+    fun account(addr: ByteArray): TResult<JsonObject> {
         return post(
             JsonRPCReq (
                 "account",
@@ -83,7 +88,7 @@ class Node (
         )
     }
 
-    fun syncTx(txbz: ByteArray): TResult<JSONObject> {
+    fun syncTx(txbz: ByteArray): TResult<JsonObject> {
         return post (
             JsonRPCReq (
             "tx_sync",
@@ -92,13 +97,15 @@ class Node (
         )
     }
 
-    fun tx(txhash: ByteArray, prove: Boolean): TResult<JSONObject> {
-        return post(JsonRPCReq (
-            "tx",
-            listOf(
-                JsonPrimitive(txhash.toHex()),
-                JsonPrimitive(prove)
-            )
-        ).encode())
+    fun tx(txhash: ByteArray, prove: Boolean = true): TResult<JsonObject> {
+        return post(
+            JsonRPCReq (
+                "tx",
+                listOf(
+                    JsonPrimitive(txhash.toHex()),
+                    JsonPrimitive(prove)
+                )
+            ).encode()
+        )
     }
 }
