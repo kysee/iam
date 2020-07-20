@@ -2,12 +2,9 @@ package com.a2z.kchainlib.net
 
 import com.a2z.kchainlib.common.TResult
 import com.a2z.kchainlib.common.toHex
-import kotlinx.serialization.ImplicitReflectionSerializer
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -54,16 +51,14 @@ class Node (
                     inputLine = it.readLine()
                 }
                 //kotlin.io.println("Response : $response")
-                val jsonrpcResp = Json.parse(JsonObject.serializer(), response.toString())
-                jsonrpcResp.getObjectOrNull("error")?.let {
-                    it.getPrimitive("code").int
-
+                val jsrpcResp = Json.parse(JsonObject.serializer(), response.toString())
+                jsrpcResp.getObjectOrNull("error")?.let {
                     return TResult.Error(
                         it.getPrimitive("code").int,
                         it.getPrimitive("message").content + " - " + it.getPrimitive("data").contentOrNull)
                 }
 
-                return TResult.Success(jsonrpcResp.getObject("result"))
+                return TResult.Success(jsrpcResp.getObjectOrNull("result")!!)
             }
         }
     } catch (ex: Exception) {
